@@ -4,39 +4,50 @@
 LiquidCrystal lcd(0,1,2,3,4,5);
 SoftwareSerial Ss(10, 11);
 
-unsigned long wynik = 0;
-int kulka = 0;
-bool koniec_gry = false;
-bool gra_rozpoczeta = false;
-bool dodatkowa_kulka = false;
-int bonus = 0;
-int wspolczynnik_bonus = 1;
+unsigned long wynik = 0; // Wynik gry (punktacja)
+int kulka = 0; // Numer rundy
+bool koniec_gry = false; // Czy minęły trzy rundy i gra się skończyła?
+bool gra_rozpoczeta = false; // Czy gra w ogóle jest rozpoczęta?
+bool dodatkowa_kulka = false; // Czy wygrano dodatkową rundę?
+int bonus = 0; // Bonusowe punkty na końcu rundy/1000
+int wspolczynnik_bonus = 1; // Mnożnik bonusowych punktów
 
-bool aktywna_lewa = false;
-bool dodatkowa_kulka_gotowa = false;
-bool trzy_grzybki[3] = {false, false, false};
-bool trzy_przetoki[3] = {false, false, false};
-int ukonczone_cele = 0;
-int uderzenia_w_grzybki = 0;
-unsigned long czas_konca_gry = 0;
+bool aktywna_lewa = false; // false - punktacja zwiększona po prawej stronie; true - po lewej
+bool dodatkowa_kulka_gotowa = false; // Czy można wygrać dodatkową rundę, trafiając w odpowiedni cel?
+bool trzy_grzybki[3] = {false, false, false}; // Czy aktywowano zwiększoną punktację grzybków?
+bool trzy_przetoki[3] = {false, false, false}; // Czy kulka przeszła przez wszystkie trzy przyciski przetok przynajmniej raz?
+int ukonczone_cele = 0; // Liczba trafionych celów
+int uderzenia_w_grzybki = 0; // Liczba trafień w "grzybki"
+unsigned long czas_konca_gry = 0; // Czas od zakończenia gry do przejścia w tryb zachęcania do gry (attract mode)
 
+// Oznaczenia pinów Arduino do zadeklarowania jako piny wejściowe
 const int piny_wejsciowe[25] = {8, 9, 12, 13, 14, 15, 18, 19, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, A6, A7, A8, A9, A10, A11};
+// Tablice odczytów z pinów wejściowych
 int odczyt[25] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW};
 int ostatni_odczyt[25] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW};
+// Czas od ostatniego wciśnięcia pinów wejściowych
 unsigned long czas_od_wcisniecia[25] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+// Oznaczenia pinów Arduino do zadeklarowania jako piny wyjściowe
 const int piny_wyjsciowe[35] = {6, 7, 16, 17, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, A0, A1, A2, A3, A4, A5, A12, A13, A14, A15};
+// Oznaczenia pinów połączonych z diodami LED przetok
 const int ledy_przetok[3] = {23,25,27};
+// Oznaczenia pinów połączonych z diodami LED wskazującymi na wartość mnożnika bonusowych punktów
 const int ledy_wsp[4] = {A12, A13, A14, A15};
 
+// Numer dźwięku do odtworzenia
 int dzwiek = 1;
+// Czy dźwięk ma grać w pętli?
 bool czy_petla = false;
+// Długości poszczególnych dźwięków [ms]
 const unsigned long dlugosci_dzwiekow[10] = {3000,2000,2000,4000,3500,4000,5000,3000,4000,3000};
+// Milisekunda działania Arduino, w której odtworono dźwięk
 unsigned long moment_odtworzenia = 0;
 
 void setup() {
   Ss.begin(9600);
 
+  // konfiguracja układu DFPlayer
   delay(500);
   modul_mp3(0x3F, 0, 0);
   delay(500);
@@ -45,18 +56,20 @@ void setup() {
   modul_mp3(0x08,0,1);
   delay(500);
 
+  // konfiguracja modułu LCD
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("     SZTORM     ");
   lcd.setCursor(0, 1);
   lcd.print("  PRESS  START  ");
 
-
+  // deklaracja kierunków pinów Arduino
   for(int i=0; i<25; i++)
     pinMode(piny_wejsciowe[i], INPUT);
   for(int i=0; i<35; i++)
     pinMode(piny_wyjsciowe[i], OUTPUT);
-  
+
+  // zapalenie niektórych diod LED
   zapal_leda(6);
   zapal_leda(7);
   zapal_leda(35);
@@ -64,7 +77,8 @@ void setup() {
 }
 
 void loop() {
-  
+
+  // Sprawdzenie, czy któryś z elementów został aktywowany
   for(int i=0; i<25; i++) {
     int nowy_odczyt = digitalRead(piny_wejsciowe[i]);
 
@@ -72,9 +86,11 @@ void loop() {
       czas_od_wcisniecia[i] = millis();
     }
 
+    // Debouncing programowy - sprawdzenie danego pinu najwcześniej 50 ms od ostatniej zmiany.
     if (millis() - czas_od_wcisniecia[i] > 50) {
       if (nowy_odczyt != odczyt[i]) {
         odczyt[i] = nowy_odczyt;
+        // Jako że wszystkie elementy są aktywowane jednym impulsem, sprawdza się jedynie zmianę stanu na wysoki.
         if (odczyt[i] == HIGH) {
           switch(piny_wejsciowe[i]) {
             case 8: //Lewy cel na środku stołu
@@ -208,6 +224,7 @@ void loop() {
   
 }
 
+// Zwiększenie wyniku
 void dodaj_punkty(int punkty) {
   wynik += punkty;
   lcd.setCursor(0, 0);
@@ -215,15 +232,19 @@ void dodaj_punkty(int punkty) {
     lcd.print(wynik);
 }
 
+// Zapalenie diody LED
 void zapal_leda(int pinLeda) {
   digitalWrite(pinLeda,HIGH);
 }
 
+// Zgaszenie diody LED
 void zgas_leda(int pinLeda) {
   digitalWrite(pinLeda,LOW);
 }
 
+// Rozpoczęcie nowej gry
 void restart_gry() {
+  // Wyzerowanie postępów gry
   wynik = 0;
   kulka = 0;
   dodatkowa_kulka = false;
@@ -243,7 +264,7 @@ void restart_gry() {
   odtworz_dzwiek(2,true);
   delay(500);
 
-
+  // Konfiguracja wyświetlacza i diod LED
   lcd.setCursor(0, 0);
   lcd.print("                ");
   lcd.print(wynik);
@@ -254,21 +275,26 @@ void restart_gry() {
   lcd.print(kulka+1);
 
   for(int i=0; i<35; i++)
-    zgas_leda(piny_wyjsciowe[i]);
+  zgas_leda(piny_wyjsciowe[i]);
   zapal_leda(6);
   zapal_leda(7);
   zapal_leda(35);
   zapal_leda(37);
   ustaw_aktywna_strone(false);
 
+  // Wprowadzenie kuli do gry
   aktywuj_wyrzutnie();
 }
 
+// Koniec rundy - kula znajduje się w "fartuchu"
 void kulka_stracona() {
   odtworz_dzwiek(10,false);
+
+  // Dodanie bonusu na koniec rundy
   int obliczony_bonus = 1000*bonus*wspolczynnik_bonus;
   dodaj_punkty(obliczony_bonus);
 
+  // Konfuguracja wyświetlacza
   lcd.setCursor(0, 0);
   lcd.print("  BONUS    X    ");
   lcd.setCursor(13, 0);
@@ -279,6 +305,7 @@ void kulka_stracona() {
   lcd.print(obliczony_bonus);
   delay(2000);
 
+  // Jeżeli przysługuje dodatkowa runda - przypomnij o tym graczowi i nie zwiększaj numeru rundy, w przeciwnym razie zwiększ numer rundy
   if(dodatkowa_kulka) {
     lcd.setCursor(0, 0);
     lcd.print("  SHOOT  AGAIN  ");
@@ -290,7 +317,7 @@ void kulka_stracona() {
   else
     kulka++;
 
-  
+  // Wyzeruj już dodany bonus i postęp trzech przetok
   bonus = 0;
   wspolczynnik_bonus = 1;
   dodatkowa_kulka_gotowa = false;
@@ -299,7 +326,8 @@ void kulka_stracona() {
     trzy_przetoki[i] = false;
     zgas_leda(ledy_przetok[i]);
   }
-  
+
+  // Ponowna konfiguracja LED-ów i wyświetlacza
   zgas_leda(16);
   zgas_leda(17);
   ledy_bonus();
@@ -310,6 +338,7 @@ void kulka_stracona() {
   lcd.print(wynik);
 
   if(kulka<3) {
+    // Jeżeli gra się nie skończyła (nie minęły trzy podstawowe oraz wszystkie dodatkowe rundy) - wprowadź nową kulkę
     lcd.setCursor(0, 1);
     lcd.print("     BALL      ");
     lcd.setCursor(10, 1);
@@ -318,6 +347,7 @@ void kulka_stracona() {
     odtworz_dzwiek(2,true);
   }
   else {
+    // Koniec gry - poinformuj o tym gracza i pokaż jego końcowy wynik
     koniec_gry = true;
     for(int i=0; i<3; i++)
     trzy_grzybki[i] = false;
@@ -336,8 +366,8 @@ void kulka_stracona() {
     czas_konca_gry = millis();
     gra_rozpoczeta = false;
 
-    delay(5000);    
-
+    // Po 5 s od końca gry ponownie przejdź w tryb zachęcania do gry (attract mode)
+    delay(5000);
     lcd.setCursor(0, 0);
     lcd.print("     SZTORM     ");
     lcd.setCursor(0, 1);
@@ -346,6 +376,7 @@ void kulka_stracona() {
   }
 }
 
+// Zwiększ mnożnik bonusu na koniec rundy (max 5 - jeżeli już wynosi 5, dodaj zamiast tego 10000 punktów)
 void zwieksz_wspolczynnik() {
   if(wspolczynnik_bonus<5)
     wspolczynnik_bonus++;
@@ -355,6 +386,7 @@ void zwieksz_wspolczynnik() {
   ledy_bonus();
 }
 
+// Zwiększ bonus o ile*1000
 void zwieksz_bonus(int ile) {
   if(bonus<39)
     bonus += ile;
@@ -362,7 +394,9 @@ void zwieksz_bonus(int ile) {
   ledy_bonus();
 }
 
+// Zaktualizuj diody LED informujące o wysokości bonusu
 void ledy_bonus() {
+  // liczba zapalonych zielonych diod - liczba jedności
   for(int i=1; i<10; i++) {
     if(bonus%10>=i)
       zapal_leda(42+i);
@@ -370,16 +404,19 @@ void ledy_bonus() {
       zgas_leda(42+i);      
   }
 
+  // żółta dioda - 10
   if(bonus>=30 || (bonus>=10 && bonus<20))
     zapal_leda(52);
   else
     zgas_leda(52);
-  
+
+  // czerwona dioda - 20
   if(bonus>=20)
     zapal_leda(53);
   else
     zgas_leda(53);
-  
+
+  // niebieskie diody - mnożnik bonusu
   for(int i=0; i<4; i++) {
     if(wspolczynnik_bonus>=i+2)
       zapal_leda(ledy_wsp[i]);
@@ -388,6 +425,7 @@ void ledy_bonus() {
   }  
 }
 
+// zmiana strony stołu, po której można otrzymać więcej punktów
 void ustaw_aktywna_strone(bool lewa) {
   aktywna_lewa = lewa;
 
@@ -401,6 +439,7 @@ void ustaw_aktywna_strone(bool lewa) {
   }
 }
 
+// wykonanie polecenia modułu DFPlayer Mini
 void modul_mp3(byte CMD, byte para1, byte para2) {
   word checksum = -(0xFF + 0x06 + CMD + 0x00 + para1 + para2);
   byte komenda[10] = { 0x7E, 0xFF, 0x06, CMD, 0x00, para1, para2, highByte(checksum), lowByte(checksum), 0xEF};
@@ -409,6 +448,7 @@ void modul_mp3(byte CMD, byte para1, byte para2) {
   }
 }
 
+// odtworzenie dźwięku
 // 1 - attract mode, 2 - gra, 3 - koniec gry, 4 - cel 1, 5 - cel 2, 6 - przetoka 1, 7 - przetoka 2,
 // 8 - przetoka 3, 9 - dodatkowa kulka, 10 - koniec rundy
 void odtworz_dzwiek(int dzw, bool petla) {
@@ -422,7 +462,9 @@ void odtworz_dzwiek(int dzw, bool petla) {
   delay(10);
 }
 
+// aktywacja "grzybka"
 void aktywuj_grzybek(int pinGrzybka) {
+  // liczenie uderzeń w "grzybki" - duża ich ilość zwiększa punktację za dalsze ich trafianie - dioda LED w danym "grzybku" zostanie zapalona
   uderzenia_w_grzybki++;
   if(uderzenia_w_grzybki>=30)
     zapal_leda(29);
@@ -430,12 +472,14 @@ void aktywuj_grzybek(int pinGrzybka) {
     zapal_leda(31);
   if(uderzenia_w_grzybki>=80)
     zapal_leda(33);
-  
+
+  // aktywuj solenoid "grzybka" i odepchnij kulkę
   digitalWrite(pinGrzybka,HIGH);
   delay(100);
   digitalWrite(pinGrzybka,LOW);
 }
 
+// aktywacja "procy" - dodanie 200 punktów i odepchnięcie kulki
 void aktywuj_proce(int pinProcy) {
   dodaj_punkty(200);
   
@@ -444,21 +488,26 @@ void aktywuj_proce(int pinProcy) {
   digitalWrite(pinProcy,LOW);
 }
 
+// przekazanie kulki z "fartucha" do ręcznej wyrzutni sprężynowej
 void aktywuj_wyrzutnie() {
   digitalWrite(A5,HIGH);
   delay(1000);
   digitalWrite(A5,LOW);
 }
 
+// po przejściu przez kulę jednej z trzech przetok nagródź gracza
 void sprawdz_trzy_przetoki(int przetoka) {
+  // jeżeli już trafiono, + 500 punktów, w przeciwnym razie + 2000 punktów
   if(trzy_przetoki[przetoka])
     dodaj_punkty(500);
   else
     dodaj_punkty(2000);
-  
+
+  // zapisz postęp
   trzy_przetoki[przetoka] = true;
   zapal_leda(ledy_przetok[przetoka]);
 
+  // jeżeli trafiono wszystkie trzy - zwiększ współczynnik bonusu
   bool ukonczone = trzy_przetoki[0] && trzy_przetoki[1] && trzy_przetoki[2];
   if(ukonczone) {
     odtworz_dzwiek(8,false);
@@ -472,11 +521,14 @@ void sprawdz_trzy_przetoki(int przetoka) {
     odtworz_dzwiek(7,false);
 }
 
+// po trafieniu przez przez kulę jednego z celów nagródź gracza
 void sprawdz_cele(bool dod_kulka) {
+  // dodaj 1000 punktów i zwiększ liczbę trafionych celów
   dodaj_punkty(1000);
   ukonczone_cele++;
 
-  if(dod_kulka && dodatkowa_kulka_gotowa) {
+  // jeżeli przyznano możliwość przedłużenia gry o dodatkową rundę, rzeczywiście ją przyznaj
+  if(dodatkowa_kulka_gotowa) {
     odtworz_dzwiek(9,false);
     dodatkowa_kulka = true;
     dodatkowa_kulka_gotowa = false;
@@ -484,20 +536,23 @@ void sprawdz_cele(bool dod_kulka) {
     zgas_leda(17);
   }
 
+  // jeżeli trafiono cele 15 razy - daj możliwość przedłużenia gry o dodatkową rundę
   if(ukonczone_cele==15) {
     dodatkowa_kulka_gotowa = true;
     zapal_leda(17);
   }
+  // co każdy trafiony cel zwiększ bonus o 1
   zwieksz_bonus(1);
+  // co trzeci i co piąty trafiony cel zwiększ bonus jeszcze o 1
   if(ukonczone_cele%5==0)
     zwieksz_bonus(1);
   if(ukonczone_cele%3==0)
     zwieksz_bonus(1);
 }
 
+// zamień bardziej punktowaną stronę
 void zamien_aktywna_strone() {
   aktywna_lewa = !aktywna_lewa;
-  Serial.println(aktywna_lewa);
 
   if(aktywna_lewa) {
     zapal_leda(39);
