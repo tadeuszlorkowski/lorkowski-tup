@@ -64,12 +64,12 @@ Poniżej znajduje sie lista połączeń elektronicznych i ich funkcje w grze. Sc
 | D51 | LED19 - zielona | Lampa bonusu 9 |
 | D52 | LED21 - żółta | Lampa bonusu 10 |
 | D53 | LED20 - czerwona | Lampa bonusu 20 |
-| A0 | L1 | „Grzybek” 1 |
-| A1 | L2 | „Grzybek” 2 |
-| A2 | L3 | „Grzybek” 3 |
-| A3 | L4 | Lewa „proca” |
-| A4 | L5 | Prawa „proca” |
-| A5 | L6 | Wyrzutnia kulek |
+| A0 | L1 | „Grzybek”- elektromagnes ciągnący 1  |
+| A1 | L2 | „Grzybek”- elektromagnes ciągnący 2 |
+| A2 | L3 | „Grzybek”- elektromagnes ciągnący 3 |
+| A3 | L4 | Lewa „proca” - elektromagnes pchający |
+| A4 | L5 | Prawa „proca” - elektromagnes pchający |
+| A5 | L6 | Wyrzutnia kulek - elektromagnes pchający |
 | A6 | S8 | „Spódnica” „grzybka” 1 |
 | A7 | S7 | „Spódnica” „grzybka” 2 |
 | A8 | S6 | „Spódnica” „grzybka” 3 |
@@ -84,9 +84,9 @@ Poniżej znajduje sie lista połączeń elektronicznych i ich funkcje w grze. Sc
 gdzie:
 - Dn - pin cyfrowy Arduino;
 - An - pin analogowy Arduino;
-- Ln - baza tranzystorowego steronika solenoidu;
+- Ln - baza tranzystora TIP 120, będącego elementem tranzystorowego sterownika solenoidu, połączona szeregowo z rezystorem 1 kΩ;
 - LEDn - dioda LED połączona szeregowo z rezystorem 220 Ω;
-- Sn - przycisk połączony od drugiej strony z pinem 5V oraz zwarty do masy rezystorem 10 kΩ.
+- Sn - przycisk (o przystosowanym do elementu flippera kształcie) połączony od drugiej strony z pinem 5V oraz zwarty do masy rezystorem 10 kΩ.
 
 ## Konfiguracja układu DFPlayer Mini
 Przed uruchomieniem urządzenia do slotu należy włożyć kartę microSD, na której znajdują się wyłącznie pliki z katalogu Sounds. Karta musi zostać sformatowana zgodnie z systemem partycjonowania FAT16 lub FAT32. Pliki na karcie należy umieścić luzem.
