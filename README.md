@@ -86,7 +86,7 @@ gdzie:
 - An - pin analogowy Arduino;
 - Ln - baza tranzystora TIP 120, będącego elementem tranzystorowego sterownika solenoidu, połączona szeregowo z rezystorem 1 kΩ;
 - LEDn - dioda LED połączona szeregowo z rezystorem 220 Ω;
-- Sn - przycisk (o przystosowanym do elementu flippera kształcie) połączony od drugiej strony z pinem 5V oraz zwarty do masy rezystorem 10 kΩ.
+- Sn - przycisk (o przystosowanym do danego elementu flippera kształcie) połączony od drugiej strony z pinem 5V oraz zwarty do masy rezystorem 10 kΩ.
 
 ## Konfiguracja układu DFPlayer Mini
 Przed uruchomieniem urządzenia do slotu należy włożyć kartę microSD, na której znajdują się wyłącznie pliki z katalogu Sounds. Karta musi zostać sformatowana zgodnie z systemem partycjonowania FAT16 lub FAT32. Pliki na karcie należy umieścić luzem.
