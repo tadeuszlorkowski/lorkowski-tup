@@ -1,7 +1,7 @@
 # lorkowski-tup
 Technika mikroprocesorowa projekt, Elektronika i Telekomunikacja, stacjonarne, rok III, sem. 5 - odrabiany przedmiot - Tadeusz Lorkowski 47530 (I rok Elektronika i Telekomunikacja MSU)
 
-Udostępniony program w języku Arduino C stanowi oprogramowanie układowe dla płyty ewaluacyjnej Arduino Mega 2560, będącej sterownikiem dla obwodu elektroniczego automatu flipper.
+Udostępniony program, w postaci kodu źródłowego Arduino C (PinballSoft.ino), stanowi oprogramowanie układowe dla płyty ewaluacyjnej Arduino Mega 2560, będącej sterownikiem dla obwodu elektroniczego automatu flipper.
 
 Więcej na ten temat w pracy dyplomowej, w pliku Praca_dyplomowa2901.pdf.
 
